@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, ZoomIn, ImageOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, ZoomIn, ImageOff, Facebook, Twitter, Link as LinkIcon, Check } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 interface GalleryImage {
@@ -92,7 +92,9 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ image, onClick }) => {
   if (hasError) {
     return (
       <div className="aspect-square w-full h-full bg-stone-50 dark:bg-stone-900 rounded-lg flex items-center justify-center border border-stone-100 dark:border-stone-800">
-        <ImageOff className="text-thai-gold/30 dark:text-thai-gold/20 w-8 h-8" strokeWidth={1.5} />
+        <div className="flex flex-col items-center gap-2">
+           <ImageOff className="text-thai-gold/30 dark:text-thai-gold/20 w-8 h-8" strokeWidth={1.5} />
+        </div>
       </div>
     );
   }
@@ -132,6 +134,7 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ image, onClick }) => {
 export const Gallery: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
+  const [copied, setCopied] = useState(false);
   const { t } = useAppContext();
 
   const categories = ['all', 'temples', 'markets', 'nature', 'culinary'];
@@ -139,6 +142,24 @@ export const Gallery: React.FC = () => {
   const filteredImages = activeCategory === 'all' 
     ? GALLERY_IMAGES 
     : GALLERY_IMAGES.filter(img => img.categoryKey === `gallery.cat.${activeCategory}`);
+
+  useEffect(() => {
+    setCopied(false);
+  }, [selectedImage]);
+
+  const handleCopy = (url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareFacebook = (url: string) => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+  };
+
+  const shareTwitter = (text: string, url: string) => {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+  };
 
   return (
     <section className="py-24 bg-white dark:bg-stone-900 transition-colors duration-300">
@@ -196,15 +217,41 @@ export const Gallery: React.FC = () => {
             <img 
               src={selectedImage.src} 
               alt={t(selectedImage.captionKey)} 
-              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+              className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl"
             />
-            <div className="mt-6 text-center">
+            
+            <div className="mt-6 text-center w-full">
               <span className="text-thai-gold text-sm font-bold tracking-widest uppercase block mb-2">
                 {t(selectedImage.categoryKey)}
               </span>
-              <h3 className="text-white font-serif text-2xl md:text-3xl">
+              <h3 className="text-white font-serif text-2xl md:text-3xl mb-6">
                 {t(selectedImage.captionKey)}
               </h3>
+              
+              {/* Share Buttons */}
+              <div className="flex items-center justify-center gap-4">
+                <button 
+                  onClick={() => shareFacebook(selectedImage.src)}
+                  className="p-3 rounded-full bg-white/10 hover:bg-thai-gold text-white transition-all duration-300 backdrop-blur-sm"
+                  title="Share on Facebook"
+                >
+                  <Facebook size={20} />
+                </button>
+                <button 
+                  onClick={() => shareTwitter(t(selectedImage.captionKey), selectedImage.src)}
+                  className="p-3 rounded-full bg-white/10 hover:bg-thai-gold text-white transition-all duration-300 backdrop-blur-sm"
+                  title="Share on Twitter"
+                >
+                  <Twitter size={20} />
+                </button>
+                <button 
+                  onClick={() => handleCopy(selectedImage.src)}
+                  className="p-3 rounded-full bg-white/10 hover:bg-thai-gold text-white transition-all duration-300 backdrop-blur-sm flex items-center justify-center"
+                  title="Copy Image Link"
+                >
+                  {copied ? <Check size={20} /> : <LinkIcon size={20} />}
+                </button>
+              </div>
             </div>
           </div>
         </div>
